@@ -6,8 +6,7 @@
 
 # 📖 Guía completa de Megatoru
 
-> Referencia de todos los métodos disponibles en Megatoru a través de `lib/base.js` (base-toru) o tu propio wrapper.  
-> Todos los ejemplos asumen que tienes `sock` como el socket extendido.
+> Referencia de todos los métodos disponibles en Megatoru a través de `lib/base.js` (base-toru) o tu propio wrapper.
 
 ---
 
