@@ -29,15 +29,15 @@
 
 ------
 
-### 🔑 **Puedes leer la guía de** `[![Guía](https://img.shields.io/badge/funciones-blue?style=for-the-badge)](guia.md)` **para que puedas saber un poco más.**
+## 🔑 **Puedes leer la guía de** [![Guía](https://img.shields.io/badge/funciones-blue?style=for-the-badge)](guia.md) **para que puedas saber un poco más.**
 
 ------
 
 ## 📍 ¿Qué es Megatoru?
 
 **Megatoru** no es un bot. Es la **librería base** sobre la que se construye el bot.
-
-Es un fork de [Ryzewa (Davizuni17)](https://github.com/Davizuni17/Ryzewa) — que a su vez es un fork de [WhiskeySockets/Baileys](https://github.com/WhiskeySockets/Baileys) — con las siguientes diferencias clave:
+ 
+> 🔑 `Diferencias clave:`
 
 | Característica | Baileys original | Megatoru |
 |---|:---:|:---:|
