@@ -23,7 +23,17 @@
 
 ---
 
-## ⚡ ¿Qué es Megatoru?
+
+### 👋🏻 **Visita el repositorio de** `base-toru`, **todavía en condiciones beta y arreglo de errores.**
+> Puedes dar una estrella para que pueda ir actualizando de a poco agregando más funciones.
+
+------
+
+### 🔑 **Puedes leer la guía de** `[![Guía](https://img.shields.io/badge/funciones-blue?style=for-the-badge)](guia.md)` **para que puedas saber un poco más.**
+
+------
+
+## 📍 ¿Qué es Megatoru?
 
 **Megatoru** no es un bot. Es la **librería base** sobre la que se construye el bot.
 
@@ -129,7 +139,6 @@ export function makeWASocket(options) {
 | [base-toru](https://github.com/anse-ux/base-toru) | ✅ Oficial |
 | Proyectos ESM propios (Node ≥ 20) | ✅ |
 | Proyectos CommonJS propios | ✅ |
-| GataBot-MD | ✅ con `base.js` adaptado |
 | Proyectos con TypeScript | ✅ tipos incluidos |
 
 ### No compatible con:
@@ -193,26 +202,11 @@ await sock.sendAlbum(jid, [
 }
 ```
 
----
-
-## 🔄 Diferencias con Ryzewa
-
-Megatoru parte de Ryzewa y agrega:
-
-- `package.json` renombrado y limpio para uso como dependencia
-- Soporte dual ESM/CJS via campo `exports`
-- `lib/index.mjs` para importación nativa desde proyectos `"type": "module"`
-- Documentación en español
-- Compatibilidad verificada con [base-toru](https://github.com/anse-ux/base-toru)
-
----
-
 ## 📜 Créditos
 
 | Proyecto | Autor |
 |---|---|
 | [WhiskeySockets/Baileys](https://github.com/WhiskeySockets/Baileys) | Rajeh & contributors |
-| [Ryzewa](https://github.com/Davizuni17/Ryzewa) | Davizuni17 |
 | Megatoru | [anse-ux](https://github.com/anse-ux) |
 
 ---
