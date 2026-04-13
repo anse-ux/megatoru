@@ -1,496 +1,618 @@
 <div align="center">
 
-<img src="https://capsule-render.vercel.app/api?type=rect&color=0:0f2027,100:2c5364&height=80&text=MEGATORU%20·%20Guía%20de%20uso&fontSize=28&fontColor=7ecbf7&fontAlignY=55" width="100%"/>
+<img src="https://capsule-render.vercel.app/api?type=rect&color=0:0d1117,100:161b22&height=80&text=megatoru%20·%20Guide&fontSize=28&fontColor=58a6ff&fontAlignY=55" width="100%"/>
 
 </div>
 
-# 📖 Guía completa de Megatoru
+# 📖 megatoru — Complete Guide
 
-> Referencia de todos los métodos disponibles en Megatoru a través de `lib/base.js` (base-toru) o tu propio wrapper.
-
----
-
-## Índice
-
-- [Mensajes de texto](#-mensajes-de-texto)
-- [Archivos y media](#-archivos-y-media)
-- [Botones interactivos](#-botones-interactivos)
-- [Listas interactivas](#-listas-interactivas)
-- [Álbumes de media](#-álbumes-de-media)
-- [Encuestas](#-encuestas)
-- [Contactos](#-contactos)
-- [AdReply (preview externo)](#-adreply-preview-externo)
-- [Mensajes de evento](#-mensajes-de-evento)
-- [Grupos — gestión de usuarios](#-grupos--gestión-de-usuarios)
-- [Anti-spam y cooldown](#-anti-spam-y-cooldown)
-- [Menciones y LID](#-menciones-y-lid)
-- [Descargar media](#-descargar-media)
-- [Reacciones](#-reacciones)
-- [Canales / Newsletters](#-canales--newsletters)
+> Reference for all message types and button structures supported by megatoru.  
 
 ---
 
-## 💬 Mensajes de texto
+## Table of Contents
+
+- [Text messages](#-text-messages)
+- [Media files](#-media-files)
+- [Simple buttons](#-simple-buttons-type-1)
+- [Flow buttons (mixed)](#-flow-buttons-mixed)
+- [Interactive buttons — all types](#-interactive-buttons--all-types)
+- [Interactive with image/video header](#-interactive-with-imagevideo-header)
+- [List messages](#-list-messages)
+- [Albums](#-albums)
+- [Polls](#-polls)
+- [AdReply (external preview)](#-adreply-external-preview)
+- [Contacts](#-contacts)
+- [Events](#-events)
+- [Reactions](#-reactions)
+- [Newsletters / Channels](#-newsletters--channels)
+- [Group management](#-group-management)
+- [Compatibility notes](#-compatibility-notes)
+
+---
+
+## 💬 Text messages
 
 ```js
-// Texto simple
-await sock.sendMessage(jid, { text: 'Hola mundo' })
+// Plain text
+await sock.sendMessage(jid, { text: 'Hello!' })
 
-// Texto con mención
+// With mention
 await sock.sendMessage(jid, {
-  text: '@521234567890 hola!',
+  text: '@521234567890 hello!',
   mentions: ['521234567890@s.whatsapp.net'],
 })
 
-// Respuesta rápida (alias sock.Reply)
-await sock.Reply(jid, 'Texto de respuesta', m)
+// Edit a sent message
+const sent = await sock.sendMessage(jid, { text: 'Original' })
+await sock.sendMessage(jid, { text: 'Edited', edit: sent.key })
 
-// Editar un mensaje enviado
-const sent = await sock.Reply(jid, 'Texto original', m)
-await sock.sendMessage(jid, { text: 'Texto editado', edit: sent.key })
-
-// Eliminar un mensaje
+// Delete a message
 await sock.sendMessage(jid, { delete: m.key })
 ```
 
 ---
 
-## 📁 Archivos y media
+## 📁 Media files
 
 ```js
-// Imagen desde URL
+// Image from URL
 await sock.sendMessage(jid, {
-  image: { url: 'https://ejemplo.com/foto.jpg' },
-  caption: 'Pie de foto',
+  image: { url: 'https://example.com/photo.jpg' },
+  caption: 'Caption text',
 }, { quoted: m })
+
+// Image from buffer
+await sock.sendMessage(jid, {
+  image: fs.readFileSync('./photo.jpg'),
+  caption: 'Caption',
+})
 
 // Video
 await sock.sendMessage(jid, {
-  video: { url: 'https://ejemplo.com/video.mp4' },
-  caption: 'Mi video',
+  video: { url: 'https://example.com/video.mp4' },
+  caption: 'Video caption',
   mimetype: 'video/mp4',
 })
 
-// Audio (PTT = nota de voz)
+// Audio (voice note)
 await sock.sendMessage(jid, {
-  audio: { url: 'https://ejemplo.com/audio.mp3' },
+  audio: { url: 'https://example.com/audio.mp3' },
   mimetype: 'audio/mpeg',
-  ptt: true, // nota de voz
+  ptt: true,
 })
 
-// Documento / archivo
+// Document
 await sock.sendMessage(jid, {
-  document: { url: 'https://ejemplo.com/archivo.pdf' },
+  document: { url: 'https://example.com/file.pdf' },
   mimetype: 'application/pdf',
-  fileName: 'documento.pdf',
+  fileName: 'document.pdf',
 })
 
-// Sticker desde buffer
+// Sticker
 await sock.sendMessage(jid, {
   sticker: fs.readFileSync('./sticker.webp'),
 })
-
-// Envío automático con detección de tipo (alias sock.Files)
-await sock.Files(jid, 'https://ejemplo.com/media.mp4', 'video.mp4', 'Caption', m)
-await sock.Files(jid, buffer, 'audio.ogg', '', m, true) // ptt=true
 ```
 
 ---
 
-## 🔘 Botones interactivos
+## 🔘 Simple buttons (type 1)
 
-Los botones usan `nativeFlowMessage` con `viewOnceMessage`.  
-Tipos disponibles: `quick_reply`, `cta_url`, `cta_copy`.
+The most basic button type. Uses `buttons` field with `buttonId` and `buttonText`.
 
 ```js
-// Botones simples (quick_reply)
-await sock.sendButton(
-  jid,
-  'Elige una opción',       // texto del body
-  'base-toru',              // footer
-  'https://i.imgur.com/x.jpg', // imagen (URL o Buffer, opcional)
-  [
-    ['Opción 1', 'id_opcion1'],
-    ['Opción 2', 'id_opcion2'],
-    ['Opción 3', 'id_opcion3'],
+await sock.sendMessage(jid, {
+  text: 'Choose an option:',
+  footer: 'megatoru Bot',
+  buttons: [
+    {
+      buttonId: 'btn_menu',
+      buttonText: { displayText: '📋 Menu' },
+      type: 1,
+    },
+    {
+      buttonId: 'btn_ping',
+      buttonText: { displayText: '⚡ Ping' },
+      type: 1,
+    },
+    {
+      buttonId: 'btn_info',
+      buttonText: { displayText: '👤 Info' },
+      type: 1,
+    },
   ],
-  null,                     // copy (texto a copiar, opcional)
-  null,                     // urls (botones de URL, opcional)
-  m                         // quoted
-)
-
-// Botón de copiar texto
-await sock.sendButton(
-  jid,
-  'Copia este código',
-  '',
-  null,
-  [],
-  'CODIGO-ABC123',          // se copia al presionar
-  null,
-  m
-)
-
-// Botones + URL
-await sock.sendButton(
-  jid,
-  'Visita nuestra web',
-  '',
-  null,
-  [['Ir al menú', 'cmd_menu']],
-  null,
-  [
-    ['🌐 Sitio web', 'https://github.com/anse-ux/base-toru'],
-    ['💬 Grupo',     'https://chat.whatsapp.com/xxx'],
-  ],
-  m
-)
+  headerType: 1,
+  viewOnce:   true,
+}, { quoted: m })
 ```
 
-### Recibir respuesta de botón
+### With image header
 
 ```js
-// En tu handler/plugin
-if (m.mtype === 'interactiveResponseMessage') {
-  const response = JSON.parse(m.msg?.nativeFlowResponseMessage?.paramsJson || '{}')
-  const id = response.id // el id del botón presionado
-  console.log('Botón presionado:', id)
+await sock.sendMessage(jid, {
+  image: { url: 'https://example.com/banner.jpg' },
+  caption: 'Choose an option:',
+  footer: 'megatoru Bot',
+  buttons: [
+    { buttonId: 'btn_1', buttonText: { displayText: '✅ Accept' }, type: 1 },
+    { buttonId: 'btn_2', buttonText: { displayText: '❌ Reject' }, type: 1 },
+  ],
+  headerType: 4,   // 4 = image header
+  viewOnce:   true,
+}, { quoted: m })
+```
+
+### Receiving button responses
+
+```js
+// In your handler/plugin
+if (m.mtype === 'buttonsResponseMessage') {
+  const id = m.msg?.selectedButtonId
+  console.log('Button pressed:', id)
 }
 ```
 
 ---
 
-## 📋 Listas interactivas
+## 🔀 Flow buttons (mixed)
+
+Combines regular `quick_reply` buttons with a native flow list (`single_select`) using `interactiveButtons`.
 
 ```js
-await sock.sendList(
-  jid,
-  'Título del menú',        // header
-  'Selecciona una opción',  // body
-  '📋 Ver opciones',        // texto del botón
-  [
+await sock.sendMessage(jid, {
+  text: '¡Control Panel!',
+  title: '🤖 Main Panel',
+  subtitle: 'Choose a category',
+  footer: '© megatoru',
+  interactiveButtons: [
+    // Quick reply buttons
     {
-      title: '🎵 Música',
-      rows: [
-        { title: '!spotify',   description: 'Buscar en Spotify', id: '!spotify' },
-        { title: '!play',      description: 'Reproducir canción', id: '!play' },
-      ],
+      name: 'quick_reply',
+      buttonParamsJson: JSON.stringify({ display_text: '📋 Menu', id: '.menu' }),
     },
     {
-      title: '📥 Descargas',
-      rows: [
-        { title: '!tiktok',    description: 'Descargar TikTok', id: '!tiktok' },
-        { title: '!yt',        description: 'Descargar YouTube', id: '!yt' },
-      ],
+      name: 'quick_reply',
+      buttonParamsJson: JSON.stringify({ display_text: '⚡ Ping', id: '.ping' }),
+    },
+    // Dropdown list
+    {
+      name: 'single_select',
+      buttonParamsJson: JSON.stringify({
+        title: '🔽 View Categories',
+        sections: [
+          {
+            title: 'Tools',
+            highlight_label: '🛠️',
+            rows: [
+              {
+                header: '🔍',
+                title: 'Google Search',
+                description: 'Search the web',
+                id: '.google',
+              },
+              {
+                header: '🖼️',
+                title: 'Create Sticker',
+                description: 'Image to sticker',
+                id: '.sticker',
+              },
+            ],
+          },
+          {
+            title: 'Entertainment',
+            highlight_label: '🎮',
+            rows: [
+              {
+                header: '🎵',
+                title: 'Download Music',
+                description: 'From YouTube',
+                id: '.play',
+              },
+            ],
+          },
+        ],
+      }),
     },
   ],
-  m                         // quoted
-)
+  headerType: 1,
+  viewOnce: true,
+}, { quoted: m })
 ```
 
-### Recibir selección de lista
+---
+
+## 🎛️ Interactive buttons — all types
+
+megatoru supports all `interactiveButtons` types via `name` + `buttonParamsJson`:
+
+```js
+await sock.sendMessage(jid, {
+  text: 'Interactive message body',
+  title: '🤖 Interactive Panel',
+  subtitle: 'Choose an action',
+  footer: 'megatoru © 2025',
+  interactiveButtons: [
+
+    // ── quick_reply: sends a text response ──────────────────
+    {
+      name: 'quick_reply',
+      buttonParamsJson: JSON.stringify({
+        display_text: '✅ Accept',
+        id: 'accept',
+      }),
+    },
+
+    // ── cta_url: opens a URL ────────────────────────────────
+    {
+      name: 'cta_url',
+      buttonParamsJson: JSON.stringify({
+        display_text: '🌐 Visit Website',
+        url: 'https://github.com/anse-ux/base-toru',
+      }),
+    },
+
+    // ── cta_copy: copies text to clipboard ──────────────────
+    {
+      name: 'cta_copy',
+      buttonParamsJson: JSON.stringify({
+        display_text: '📋 Copy Code',
+        id: 'copy_code',
+        copy_code: 'MEGATORU2026',
+      }),
+    },
+
+    // ── cta_call: initiates a phone call ────────────────────
+    {
+      name: 'cta_call',
+      buttonParamsJson: JSON.stringify({
+        display_text: '📞 Call',
+        id: '+521234567890',
+      }),
+    },
+
+    // ── single_select: dropdown list ────────────────────────
+    {
+      name: 'single_select',
+      buttonParamsJson: JSON.stringify({
+        title: '📜 View Options',
+        sections: [
+          {
+            title: 'Settings',
+            highlight_label: '⚙️',
+            rows: [
+              {
+                header: 'Language',
+                title: 'Change Language',
+                description: 'Spanish / English',
+                id: 'change_lang',
+              },
+              {
+                header: 'Theme',
+                title: 'Change Theme',
+                description: 'Light / Dark',
+                id: 'change_theme',
+              },
+            ],
+          },
+        ],
+      }),
+    },
+
+    // ── send_location: request user location ────────────────
+    {
+      name: 'send_location',
+      buttonParamsJson: '',
+    },
+
+  ],
+  headerType: 1,
+  viewOnce:   true,
+}, { quoted: m })
+```
+
+### Receiving interactive responses
 
 ```js
 if (m.mtype === 'interactiveResponseMessage') {
-  const data = JSON.parse(m.msg?.nativeFlowResponseMessage?.paramsJson || '{}')
-  const selected = data.id // el id de la fila seleccionada
+  const data = JSON.parse(
+    m.msg?.nativeFlowResponseMessage?.paramsJson || '{}'
+  )
+  const id = data.id  // the id of the selected button/row
+  console.log('Selected:', id)
 }
 ```
 
 ---
 
-## 🖼️ Álbumes de media
-
-Envía múltiples imágenes y/o videos agrupados en un álbum.  
-Mínimo 2 medias. Máximo recomendado: 10.
+## 🖼️ Interactive with image/video header
 
 ```js
-await sock.sendAlbum(
-  jid,
-  [
-    { type: 'image', data: { url: 'https://i.imgur.com/a.jpg' }, caption: 'Foto 1' },
-    { type: 'image', data: { url: 'https://i.imgur.com/b.jpg' }, caption: 'Foto 2' },
-    { type: 'video', data: { url: 'https://ejemplo.com/c.mp4' }, caption: 'Video' },
+// Image header
+await sock.sendMessage(jid, {
+  image: { url: 'https://example.com/banner.jpg' },
+  caption: 'Body description',
+  title: 'Message Title',
+  subtitle: 'Subtitle',
+  footer: 'megatoru',
+  media: true,               // ← required for media header
+  interactiveButtons: [
+    {
+      name: 'quick_reply',
+      buttonParamsJson: JSON.stringify({ display_text: '👍 Like', id: 'like' }),
+    },
+    {
+      name: 'cta_url',
+      buttonParamsJson: JSON.stringify({
+        display_text: '🔗 Learn more',
+        url: 'https://github.com/anse-ux/base-toru',
+      }),
+    },
   ],
-  {
-    quoted: m,      // mensaje citado (opcional)
-    delay: 500,     // ms entre cada media (default: 500)
-  }
-)
+}, { quoted: m })
 
-// Con buffer local
+// Video header — same structure, replace image with video
+await sock.sendMessage(jid, {
+  video: { url: 'https://example.com/clip.mp4' },
+  caption: 'Video description',
+  media: true,
+  interactiveButtons: [ /* ... */ ],
+}, { quoted: m })
+```
+
+---
+
+## 📋 List messages
+
+Pure dropdown list using `single_select`. No other buttons.
+
+```js
+await sock.sendMessage(jid, {
+  text: 'Select a category from the button below.',
+  title: '📋 Options Menu',
+  footer: 'megatoru',
+  interactiveButtons: [
+    {
+      name: 'single_select',
+      buttonParamsJson: JSON.stringify({
+        title: '📋 View categories',
+        sections: [
+          {
+            title: '🧩 Plugins',
+            rows: [
+              { header: '', title: '.menu', description: 'Main menu', id: '.menu' },
+              { header: '', title: '.ping', description: 'Check latency', id: '.ping' },
+              { header: '', title: '.infobot', description: 'Bot info', id: '.infobot' },
+            ],
+          },
+          {
+            title: '⚙️ System',
+            rows: [
+              { header: '', title: '.run', description: 'Bot uptime', id: '.run' },
+              { header: '', title: '.bots', description: 'Active bots', id: '.bots' },
+            ],
+          },
+        ],
+      }),
+    },
+  ],
+  headerType: 1,
+  viewOnce:   true,
+}, { quoted: m })
+```
+
+---
+
+## 🖼️ Albums
+
+Send grouped images and/or videos. Minimum 2 items.
+
+```js
+// URLs
 await sock.sendAlbum(jid, [
-  { type: 'image', data: fs.readFileSync('./foto1.jpg') },
-  { type: 'image', data: fs.readFileSync('./foto2.jpg') },
+  { type: 'image', data: { url: 'https://example.com/a.jpg' }, caption: 'Photo 1' },
+  { type: 'image', data: { url: 'https://example.com/b.jpg' }, caption: 'Photo 2' },
+  { type: 'video', data: { url: 'https://example.com/c.mp4' }, caption: 'Video'   },
+], { quoted: m, delay: 500 })
+
+// Buffers
+await sock.sendAlbum(jid, [
+  { type: 'image', data: fs.readFileSync('./photo1.jpg') },
+  { type: 'image', data: fs.readFileSync('./photo2.jpg') },
 ])
 ```
 
 ---
 
-## 📊 Encuestas
+## 📊 Polls
 
 ```js
-await sock.sendPoll(
-  jid,
-  '¿Cuál es tu lenguaje favorito?',
-  [
-    ['JavaScript'],
-    ['Python'],
-    ['TypeScript'],
-    ['Rust'],
-  ]
-)
-```
-
-### Leer resultado de encuesta
-
-```js
-import { getAggregateVotesInPollMessage } from '@whiskeysockets/baileys'
-
-sock.ev.on('messages.update', async updates => {
-  for (const { key, update } of updates) {
-    if (update.pollUpdates) {
-      const pollMsg   = await sock.loadMessage(key.remoteJid, key.id)
-      const votes     = getAggregateVotesInPollMessage({ message: pollMsg, pollUpdates: update.pollUpdates })
-      console.log('Votos:', votes)
-    }
-  }
-})
+await sock.sendPoll(jid, 'What is your favorite language?', [
+  ['JavaScript'],
+  ['Python'],
+  ['TypeScript'],
+  ['Rust'],
+])
 ```
 
 ---
 
-## 📇 Contactos
+## 🔗 AdReply (external preview)
+
+Message with a custom link preview card.
 
 ```js
-// Contacto simple
-await sock.sendContact(
-  jid,
-  [['521234567890', 'Juan Pérez']],
-  m
-)
-
-// Múltiples contactos
-await sock.sendContact(
-  jid,
-  [
-    ['521234567890', 'Juan'],
-    ['549123456789', 'Ana'],
-  ],
-  m
-)
-```
-
----
-
-## 🔗 AdReply (preview externo)
-
-Mensaje de texto con tarjeta de preview personalizada (título, imagen, URL).
-
-```js
-await sock.sendToruWa(
-  jid,
-  'Texto del mensaje',
-  bufferImagen,           // Buffer de la imagen thumbnail
-  'Título de la tarjeta',
-  'Subtítulo / body',
-  'https://enlace.com',  // URL de la tarjeta
-  m                      // quoted
-)
-
-// O directo con generateWAMessageFromContent
 import { generateWAMessageFromContent } from '@whiskeysockets/baileys'
 
-const msg = generateWAMessageFromContent(jid, {
+const prep = generateWAMessageFromContent(jid, {
   extendedTextMessage: {
-    text: 'Mi texto',
+    text: 'Message text',
     contextInfo: {
       externalAdReply: {
-        title:                  'Mi título',
-        body:                   'Descripción',
-        thumbnail:              buffer,
-        sourceUrl:              'https://ejemplo.com',
-        mediaType:              1,
-        renderLargerThumbnail:  false,
+        title: 'Card Title',
+        body: 'Card description',
+        thumbnail: imageBuffer,
+        sourceUrl: 'https://example.com',
+        mediaType: 1,
+        renderLargerThumbnail: false,
       },
     },
   },
 }, { quoted: m })
+
+await sock.relayMessage(jid, prep.message, { messageId: prep.key.id })
+```
+
+---
+
+## 📇 Contacts
+
+```js
+// Single contact
+await sock.sendMessage(jid, {
+  contacts: {
+    displayName: 'John Doe',
+    contacts: [{
+      displayName: 'John Doe',
+      vcard: `BEGIN:VCARD\nVERSION:3.0\nFN:John Doe\nTEL;waid=521234567890:+521234567890\nEND:VCARD`,
+    }],
+  },
+}, { quoted: m })
+```
+
+---
+
+## 📅 Events
+
+```js
+import { generateWAMessageFromContent } from '@whiskeysockets/baileys'
+
+const msg = generateWAMessageFromContent(jid, {
+  messageContextInfo: {},
+  eventMessage: {
+    isCanceled: false,
+    name: 'Event Name',
+    description: 'Event description',
+    location: { degreesLatitude: 0, degreesLongitude: 0, name: 'City, Country' },
+    joinLink: 'https://meet.example.com',
+    startTime: String(Math.floor(Date.now() / 1000)),
+  },
+}, {})
 
 await sock.relayMessage(jid, msg.message, { messageId: msg.key.id })
 ```
 
 ---
 
-## 📅 Mensajes de evento
+## 👍 Reactions
 
 ```js
-await sock.sendEvent(
-  jid,
-  'Nombre del evento',
-  'Descripción del evento',
-  'Ciudad, País',           // nombre de ubicación
-  'https://link-reunion.com'
-)
-```
-
----
-
-## 👥 Grupos — gestión de usuarios
-
-```js
-// Agregar participantes
-await sock.groupParticipantsUpdate(jid, ['521234567890@s.whatsapp.net'], 'add')
-
-// Eliminar participantes
-await sock.groupParticipantsUpdate(jid, ['521234567890@s.whatsapp.net'], 'remove')
-
-// Promover a admin
-await sock.groupParticipantsUpdate(jid, ['521234567890@s.whatsapp.net'], 'promote')
-
-// Quitar admin
-await sock.groupParticipantsUpdate(jid, ['521234567890@s.whatsapp.net'], 'demote')
-
-// Obtener metadata del grupo
-const meta = await sock.groupMetadata(jid)
-console.log(meta.subject)       // nombre del grupo
-console.log(meta.participants)  // lista de participantes
-console.log(meta.desc)          // descripción
-
-// Cambiar nombre del grupo
-await sock.groupUpdateSubject(jid, 'Nuevo nombre')
-
-// Cambiar descripción
-await sock.groupUpdateDescription(jid, 'Nueva descripción')
-
-// Obtener link de invitación
-const link = await sock.groupInviteCode(jid)
-console.log(`https://chat.whatsapp.com/${link}`)
-
-// Revocar link de invitación
-await sock.groupRevokeInvite(jid)
-
-// Solo admins pueden enviar mensajes
-await sock.groupSettingUpdate(jid, 'announcement')
-
-// Todos pueden enviar mensajes
-await sock.groupSettingUpdate(jid, 'not_announcement')
-
-// Bloquear edición de info del grupo a no-admins
-await sock.groupSettingUpdate(jid, 'locked')
-await sock.groupSettingUpdate(jid, 'unlocked')
-```
-
----
-
-## 🛡️ Anti-spam y cooldown
-
-Patrón recomendado en tus plugins:
-
-```js
-// En tu plugin
-handler.before = async (m, { conn }) => {
-  const user = global.db.data.users[m.sender]
-
-  // Cooldown de 5 segundos por usuario
-  const lastCmd = user.lastCmd || 0
-  if (Date.now() - lastCmd < 5000) {
-    await conn.Reply(m.chat, '⏳ Espera un momento antes de usar otro comando.', m)
-    return true // detiene la ejecución del plugin
-  }
-
-  user.lastCmd = Date.now()
-  return false
-}
-
-// O usando el sistema del handler (spam integrado en handler.js)
-// El handler.js ya aplica un cooldown de 3s automático a todos los usuarios.
-// Para comandos específicos con cooldown mayor:
-handler.exp = 0 // no dar XP en este comando
-```
-
----
-
-## 🏷️ Menciones y LID
-
-```js
-// parseMention — convierte @número en JID
-const mentions = sock.parseMention('@521234567890 hola')
-// → ['521234567890@s.whatsapp.net']
-
-// Resolver LID a JID real (en grupos)
-const realJid = await '2064123456@lid'.resolveLidToRealJid(groupJid, sock)
-// → '521234567890@s.whatsapp.net'
-
-// Enviar mención
+// Add reaction
 await sock.sendMessage(jid, {
-  text: 'Hola @521234567890',
-  mentions: ['521234567890@s.whatsapp.net'],
+  react: { text: '🔥', key: m.key },
+})
+
+// Remove reaction
+await sock.sendMessage(jid, {
+  react: { text: '', key: m.key },
 })
 ```
 
 ---
 
-## 📥 Descargar media
+## 📡 Newsletters / Channels
 
 ```js
-// Desde un mensaje recibido
-const buffer = await m.download()
-
-// Especificando tipo
-const buffer = await sock.downloadM(m.msg, m.mediaType.replace('Message', ''))
-
-// Guardando a archivo
-const filePath = await sock.downloadM(m.msg, 'image', true)
-console.log(filePath) // → './tmp/1234567890.jpg'
-```
-
----
-
-## 👍 Reacciones
-
-```js
-await sock.sendMessage(jid, {
-  react: {
-    text: '🔥',    // emoji de reacción
-    key:  m.key,   // key del mensaje al que reaccionar
-  },
-})
-
-// Quitar reacción
-await sock.sendMessage(jid, {
-  react: { text: '', key: m.key }
-})
-```
-
----
-
-## 📡 Canales / Newsletters
-
-```js
-// Seguir un canal
+// Follow a channel
 await sock.newsletterFollow('120363424098891946@newsletter')
 
-// Dejar de seguir
+// Unfollow
 await sock.newsletterUnfollow('120363424098891946@newsletter')
 
-// Enviar mensaje a un canal (requiere ser admin del canal)
+// Send to channel (requires admin)
 await sock.sendMessage('120363424098891946@newsletter', {
-  text: 'Actualización del canal',
+  text: 'Channel update message',
 })
-
-// Obtener metadata del canal
-const meta = await sock.newsletterMetadata('120363424098891946@newsletter')
-console.log(meta.name)
-console.log(meta.subscribers)
 ```
+
+---
+
+## 👥 Group management
+
+```js
+// Add participants
+await sock.groupParticipantsUpdate(jid, ['521234567890@s.whatsapp.net'], 'add')
+
+// Remove participants
+await sock.groupParticipantsUpdate(jid, ['521234567890@s.whatsapp.net'], 'remove')
+
+// Promote to admin
+await sock.groupParticipantsUpdate(jid, ['521234567890@s.whatsapp.net'], 'promote')
+
+// Demote from admin
+await sock.groupParticipantsUpdate(jid, ['521234567890@s.whatsapp.net'], 'demote')
+
+// Get group metadata
+const meta = await sock.groupMetadata(jid)
+console.log(meta.subject)       // group name
+console.log(meta.participants)  // participant list
+console.log(meta.desc)          // description
+
+// Change group name
+await sock.groupUpdateSubject(jid, 'New Group Name')
+
+// Change description
+await sock.groupUpdateDescription(jid, 'New description')
+
+// Get invite link
+const code = await sock.groupInviteCode(jid)
+console.log(`https://chat.whatsapp.com/${code}`)
+
+// Revoke invite link
+await sock.groupRevokeInvite(jid)
+
+// Only admins can send (announcement mode)
+await sock.groupSettingUpdate(jid, 'announcement')
+await sock.groupSettingUpdate(jid, 'not_announcement')
+```
+
+---
+
+## ⚠️ Compatibility notes
+
+### Button types
+
+| Type | Field | Works in | Notes |
+|---|---|---|---|
+| Simple buttons | `buttons[]` | Personal & Groups | Most compatible |
+| Interactive flow | `interactiveButtons[]` | Personal & Groups | Requires megatoru |
+| List (single_select) | `interactiveButtons[{name:'single_select'}]` | Personal & Groups | Requires megatoru |
+| Legacy `buttonsMessage` | — | ❌ | Removed in Baileys v7+ |
+| Legacy `listMessage` | — | ❌ | Removed in Baileys v7+ |
+
+### `viewOnce` field
+
+Adding `viewOnce: true` to button messages prevents them from being forwarded and removes them from chat after interaction on some WhatsApp versions. Use it for menus and sensitive content.
+
+### `headerType` values
+
+| Value | Header type |
+|---|---|
+| `1` | Text only |
+| `2` | Document |
+| `3` | Image (empty) |
+| `4` | Image |
+| `5` | Video |
+| `6` | Location |
 
 ---
 
 <div align="center">
 
-¿Falta algún método? Abre un [issue](https://github.com/anse-ux/megatoru/issues) o contribuye con un PR.
+Missing something? Open an [issue](https://github.com/anse-ux/megatoru/issues) or submit a PR.
 
 **[← README](README.md)** · **[base-toru →](https://github.com/anse-ux/base-toru)**
+
+[![anse-ux](https://img.shields.io/badge/developer-anse--ux-58a6ff?style=flat-square&logo=github&logoColor=white)](https://github.com/anse-ux)
 
 </div>
